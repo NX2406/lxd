@@ -15,8 +15,8 @@ INSTALL_DIR="/opt/lxd-panel"
 PANEL_PORT=8000
 
 # GitHub 仓库配置（用户需要修改）
-GITHUB_USER="YOUR_USERNAME"
-GITHUB_REPO="lxd-panel"
+GITHUB_USER="NX2406"
+GITHUB_REPO="lxd"
 GITHUB_BRANCH="main"
 GITHUB_RAW="https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/${GITHUB_BRANCH}"
 
