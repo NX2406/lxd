@@ -147,9 +147,12 @@ fi
 echo -e "${BLUE}[1/8]${PLAIN} 安装系统依赖..."
 if [ "$PKG_MANAGER" = "apt-get" ]; then
     apt-get update -y >/dev/null 2>&1
-    apt-get install -y sqlite3 curl wget build-essential libssl-dev libffi-dev >/dev/null 2>&1
+    # 安装编译依赖（bcrypt 需要）
+    apt-get install -y sqlite3 curl wget build-essential libssl-dev libffi-dev \
+        python3-dev gcc g++ make pkg-config >/dev/null 2>&1
 else
-    yum install -y sqlite curl wget gcc openssl-devel libffi-devel >/dev/null 2>&1
+    yum install -y sqlite curl wget gcc openssl-devel libffi-devel \
+        python3-devel gcc-c++ make pkgconfig >/dev/null 2>&1
 fi
 echo -e "${BLUE}[2/8]${PLAIN} 创建项目目录..."
 mkdir -p "$INSTALL_DIR"/{backend/app,backend/frontend/admin,data,logs}
@@ -184,12 +187,24 @@ cd backend
 python3 -m venv venv
 source venv/bin/activate
 echo -e "${BLUE}[5/8]${PLAIN} 安装 Python 依赖..."
-pip install --upgrade pip >/dev/null 2>&1
+pip install --upgrade pip setuptools wheel >/dev/null 2>&1
+# 先单独安装 bcrypt（确保编译成功）
+echo -n "安装 bcrypt... "
+if pip install bcrypt >/dev/null 2>&1; then
+    echo -e "${GREEN}✓${PLAIN}"
+else
+    echo -e "${RED}✗ 编译失败${PLAIN}"
+    echo -e "${YELLOW}尝试使用预编译版本...${PLAIN}"
+    pip install --only-binary :all: bcrypt >/dev/null 2>&1 || true
+fi
+# 安装其他依赖
+echo -n "安装其他 Python 包... "
 pip install fastapi==0.109.0 uvicorn==0.27.0 sqlalchemy==2.0.25 \
     pydantic==2.5.3 pydantic-settings==2.1.0 \
     python-jose[cryptography]==3.3.0 passlib[bcrypt]==1.7.4 \
     python-multipart==0.0.6 python-telegram-bot==20.7 \
     apscheduler==3.10.4 psutil==5.9.8 aiofiles==23.2.1 >/dev/null 2>&1
+echo -e "${GREEN}✓${PLAIN}"
 echo ""
 echo -e "${BLUE}[6/8]${PLAIN} 配置 Telegram 通知（可选）..."
 read -p "是否配置 Telegram 机器人? (y/n): " setup_telegram
