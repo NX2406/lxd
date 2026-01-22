@@ -77,9 +77,9 @@ if ! command -v python3 >/dev/null 2>&1; then
     echo -e "${YELLOW}正在安装 Python 3...${PLAIN}"
     if [ "$PKG_MANAGER" = "apt-get" ]; then
         apt-get update -y >/dev/null 2>&1
-        apt-get install -y python3 python3-pip python3-venv >/dev/null 2>&1
+        apt-get install -y python3 python3-pip python3-venv python3-dev >/dev/null 2>&1
     else
-        yum install -y python3 python3-pip >/dev/null 2>&1
+        yum install -y python3 python3-pip python3-devel >/dev/null 2>&1
     fi
     echo -e "${GREEN}✓ Python 3 安装完成${PLAIN}"
 else
@@ -98,7 +98,7 @@ if [ "$PYTHON_MAJOR" -lt 3 ] || ([ "$PYTHON_MAJOR" -eq 3 ] && [ "$PYTHON_MINOR" 
         apt-get install -y software-properties-common >/dev/null 2>&1
         add-apt-repository -y ppa:deadsnakes/ppa >/dev/null 2>&1 || true
         apt-get update -y >/dev/null 2>&1
-        apt-get install -y python3.9 python3.9-venv python3.9-pip >/dev/null 2>&1
+        apt-get install -y python3.9 python3.9-venv python3.9-pip python3.9-dev >/dev/null 2>&1
         update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.9 1 >/dev/null 2>&1
     else
         echo -e "${RED}请手动升级 Python 到 3.8 或更高版本${PLAIN}"
@@ -107,6 +107,32 @@ if [ "$PYTHON_MAJOR" -lt 3 ] || ([ "$PYTHON_MAJOR" -eq 3 ] && [ "$PYTHON_MINOR" 
     echo -e "${GREEN}✓ Python 已升级${PLAIN}"
 else
     echo -e "${GREEN}✓ 版本符合要求${PLAIN}"
+fi
+# 确保安装了 venv 包（根据实际 Python 版本）
+echo -n "检测 Python venv... "
+if ! python3 -m venv --help >/dev/null 2>&1; then
+    echo -e "${YELLOW}未安装${PLAIN}"
+    echo -e "${YELLOW}正在安装 venv...${PLAIN}"
+    
+    if [ "$PKG_MANAGER" = "apt-get" ]; then
+        # 获取实际的 Python 版本号（如 3.11）
+        PY_VER=$(python3 -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')")
+        # 尝试安装对应版本的 venv 包
+        apt-get install -y python${PY_VER}-venv python${PY_VER}-dev >/dev/null 2>&1 || \
+        apt-get install -y python3-venv python3-dev >/dev/null 2>&1
+    else
+        yum install -y python3-devel >/dev/null 2>&1
+    fi
+    
+    # 再次检查
+    if ! python3 -m venv --help >/dev/null 2>&1; then
+        echo -e "${RED}✗ venv 安装失败${PLAIN}"
+        echo -e "${YELLOW}请手动运行: apt install python3-venv 或 apt install python${PY_VER}-venv${PLAIN}"
+        exit 1
+    fi
+    echo -e "${GREEN}✓ venv 安装完成${PLAIN}"
+else
+    echo -e "${GREEN}✓ 已安装${PLAIN}"
 fi
 # ==================== 安装其他依赖 ====================
 echo -e "${BLUE}[1/8]${PLAIN} 安装系统依赖..."
