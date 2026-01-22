@@ -109,30 +109,39 @@ else
     echo -e "${GREEN}✓ 版本符合要求${PLAIN}"
 fi
 # 确保安装了 venv 包（根据实际 Python 版本）
+PYTHON_VERSION_FULL=$(python3 --version 2>&1 | awk '{print $2}')
+PY_MAJOR=$(echo $PYTHON_VERSION_FULL | cut -d. -f1)
+PY_MINOR=$(echo $PYTHON_VERSION_FULL | cut -d. -f2)
+PY_VER="${PY_MAJOR}.${PY_MINOR}"
 echo -n "检测 Python venv... "
-if ! python3 -m venv --help >/dev/null 2>&1; then
-    echo -e "${YELLOW}未安装${PLAIN}"
-    echo -e "${YELLOW}正在安装 venv...${PLAIN}"
-    
-    if [ "$PKG_MANAGER" = "apt-get" ]; then
-        # 获取实际的 Python 版本号（如 3.11）
-        PY_VER=$(python3 -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')")
-        # 尝试安装对应版本的 venv 包
-        apt-get install -y python${PY_VER}-venv python${PY_VER}-dev >/dev/null 2>&1 || \
-        apt-get install -y python3-venv python3-dev >/dev/null 2>&1
+# 强制安装对应版本的 venv（不依赖检测）
+if [ "$PKG_MANAGER" = "apt-get" ]; then
+    echo -e "${YELLOW}安装中${PLAIN}"
+    # 尝试安装精确版本的 venv
+    if apt-get install -y python${PY_VER}-venv python${PY_VER}-dev >/dev/null 2>&1; then
+        echo -e "${GREEN}✓ python${PY_VER}-venv 安装完成${PLAIN}"
     else
-        yum install -y python3-devel >/dev/null 2>&1
+        # 回退到通用包
+        apt-get install -y python3-venv python3-dev >/dev/null 2>&1
+        echo -e "${GREEN}✓ python3-venv 安装完成${PLAIN}"
     fi
-    
-    # 再次检查
-    if ! python3 -m venv --help >/dev/null 2>&1; then
-        echo -e "${RED}✗ venv 安装失败${PLAIN}"
-        echo -e "${YELLOW}请手动运行: apt install python3-venv 或 apt install python${PY_VER}-venv${PLAIN}"
-        exit 1
-    fi
-    echo -e "${GREEN}✓ venv 安装完成${PLAIN}"
 else
+    yum install -y python3-devel >/dev/null 2>&1
     echo -e "${GREEN}✓ 已安装${PLAIN}"
+fi
+# 实际测试创建虚拟环境
+echo -n "测试虚拟环境创建... "
+TEST_VENV="/tmp/test_venv_$$"
+if python3 -m venv "$TEST_VENV" >/dev/null 2>&1; then
+    rm -rf "$TEST_VENV"
+    echo -e "${GREEN}✓ 测试成功${PLAIN}"
+else
+    echo -e "${RED}✗ 测试失败${PLAIN}"
+    echo -e "${RED}错误: 无法创建 Python 虚拟环境${PLAIN}"
+    echo -e "${YELLOW}请手动运行以下命令:${PLAIN}"
+    echo -e "${YELLOW}  apt update${PLAIN}"
+    echo -e "${YELLOW}  apt install -y python${PY_VER}-venv${PLAIN}"
+    exit 1
 fi
 # ==================== 安装其他依赖 ====================
 echo -e "${BLUE}[1/8]${PLAIN} 安装系统依赖..."
