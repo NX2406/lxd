@@ -13,13 +13,13 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;36m'
 NC='\033[0m'
 
-# GitHub仓库配置（需要替换为您的实际仓库地址）
-GITHUB_USER="YOUR_USERNAME"  # 修改为您的GitHub用户名
-GITHUB_REPO="lxd-panel"      # 修改为您的仓库名
-GITHUB_BRANCH="main"         # 分支名，可能是main或master
+# GitHub仓库配置
+GITHUB_USER="NX2406"        # GitHub用户名
+GITHUB_REPO="lxd"           # 仓库名
+GITHUB_BRANCH="main"        # 分支名
 
-# 或者使用完整URL
-# GITHUB_URL="https://github.com/YOUR_USERNAME/lxd-panel"
+# 完整URL
+# GITHUB_URL="https://github.com/NX2406/lxd"
 
 # 日志函数
 log_info() {
