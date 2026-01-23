@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LXD 管理面板</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <!-- 登录页面 -->
+    <div id="login-page" class="page">
+        <div class="login-container">
+            <div class="login-box">
+                <h1>LXD 管理面板</h1>
+                <form id="login-form">
+                    <div class="form-group">
+                        <input type="text" id="username" placeholder="用户名" required>
+                    </div>
+                    <div class="form-group">
+                        <input type="password" id="password" placeholder="密码" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">登录</button>
+                </form>
+                <div id="login-error" class="error-message"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 主面板页面 -->
+    <div id="main-page" class="page" style="display: none;">
+        <!-- 顶部导航栏 -->
+        <header class="header">
+            <div class="header-left">
+                <div class="logo">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                        <rect x="4" y="4" width="6" height="6" rx="1" />
+                        <rect x="14" y="4" width="6" height="6" rx="1" />
+                        <rect x="4" y="14" width="6" height="6" rx="1" />
+                        <rect x="14" y="14" width="6" height="6" rx="1" />
+                    </svg>
+                </div>
+                <h1>无可用实例</h1>
+                <div class="header-actions">
+                    <button class="btn btn-secondary" onclick="refreshContainers()">刷新</button>
+                    <button class="btn btn-primary" onclick="showCreateModal()">创建容器</button>
+                </div>
+            </div>
+            <div class="header-right">
+                <button class="btn btn-logout" onclick="logout()">退出</button>
+            </div>
+        </header>
+
+        <!-- 主内容区域 -->
+        <div class="main-container">
+            <!-- 左侧容器列表 -->
+            <div class="sidebar">
+                <div class="sidebar-section">
+                    <h3>登录信息</h3>
+                    <div class="info-item">
+                        <span class="label">用户名:</span>
+                        <span class="value" id="sidebar-username">root</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">密码:</span>
+                        <span class="value">--</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">SSH端口:</span>
+                        <span class="value">--</span>
+                    </div>
+                </div>
+
+                <div class="sidebar-section">
+                    <h3>有效时间信息</h3>
+                    <div class="info-item">
+                        <span class="label">到期日期:</span>
+                        <span class="value" id="expiry-date">2025-11-21 23:11</span>
+                    </div>
+                    <divclass="info-item">
+                        <span class="label">支付周期:</span>
+                        <span class="value">免费</span>
+                </div>
+                <div class="info-item">
+                    <span class="label">到期时间:</span>
+                    <span class="value">--</span>
+                </div>
+            </div>
+
+            <div class="sidebar-section">
+                <h3>硬盘</h3>
+                <div class="resource-item">
+                    <span class="label">总容量:</span>
+                    <span class="value">512MB</span>
+                </div>
+            </div>
+
+            <div class="sidebar-section">
+                <h3>网络带宽</h3>
+                <div class="resource-item">
+                    <span class="label">流量限额:</span>
+                    <span class="value">10G</span>
+                </div>
+                <div class="resource-item">
+                    <span class="label">上行带宽:</span>
+                    <span class="value">100Mbps</span>
+                </div>
+                <div class="resource-item">
+                    <span class="label">下行带宽:</span>
+                    <span class="value">100Mbps</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧内容区 -->
+        <div class="content">
+            <!-- 标签页导航 -->
+            <div class="tabs">
+                <button class="tab active" data-tab="instances">产品管理</button>
+                <button class="tab" data-tab="resources">管理转接资源</button>
+                <button class="tab" data-tab="nat">NAT转发</button>
+                <button class="tab" data-tab="tokens">控制代理</button>
+                <button class="tab" data-tab="logs">日志</button>
+                <button class="tab" data-tab="stats">财务</button>
+            </div>
+
+            <!-- 容器列表页面 -->
+            <div id="instances-tab" class="tab-content active">
+                <div class="resource-overview">
+                    <div class="resource-card">
+                        <div class="resource-icon cpu-icon">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
+                                <rect x="5" y="5" width="14" height="14" rx="2" fill="none" stroke="currentColor"
+                                    stroke-width="2" />
+                                <rect x="9" y="9" width="6" height="6" rx="1" />
+                            </svg>
+                        </div>
+                        <div class="resource-info">
+                            <div class="resource-label">CPU资源</div>
+                            <div class="resource-value" id="total-cpu">4核/4核</div>
+                        </div>
+                    </div>
+
+                    <div class="resource-card">
+                        <div class="resource-icon memory-icon">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
+                                <rect x="4" y="6" width="16" height="12" rx="2" fill="none" stroke="currentColor"
+                                    stroke-width="2" />
+                                <line x1="8" y1="10" x2="8" y2="14" stroke="currentColor" stroke-width="2" />
+                                <line x1="12" y1="10" x2="12" y2="14" stroke="currentColor" stroke-width="2" />
+                                <line x1="16" y1="10" x2="16" y2="14" stroke="currentColor" stroke-width="2" />
+                            </svg>
+                        </div>
+                        <div class="resource-info">
+                            <div class="resource-label">内存资源</div>
+                            <div class="resource-value" id="total-memory">11.2 MB / 512MB</div>
+                        </div>
+                    </div>
+
+                    <div class="resource-card">
+                        <div class="resource-icon disk-icon">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
+                                <circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="2" />
+                                <circle cx="12" cy="12" r="2" />
+                            </svg>
+                        </div>
+                        <div class="resource-info">
+                            <div class="resource-label">硬盘资源</div>
+                            <div class="resource-value" id="total-disk">272 MB / 512MB</div>
+                        </div>
+                    </div>
+
+                    <div class="resource-card">
+                        <div class="resource-icon network-icon">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" fill="none"
+                                    stroke="currentColor" stroke-width="2" />
+                            </svg>
+                        </div>
+                        <div class="resource-info">
+                            <div class="resource-label">流量使用</div>
+                            <div class="resource-value" id="total-traffic">0.00 GB / 10 GB</div>
+                        </div>
+                    </div>
+                </div>
+
+                <h2>使用说明</h2>
+                <div class="usage-info">
+                    <p>管理和监控您的LXD容器实例。点击"创建容器"开始使用。</p>
+                </div>
+
+                <div id="container-list" class="container-list">
+                    <!-- 容器卡片将动态加载 -->
+                </div>
+            </div>
+
+            <!-- 其他标签页内容 -->
+            <div id="resources-tab" class="tab-content">
+                <h2>管理转接资源</h2>
+                <p>此功能正在开发中...</p>
+            </div>
+            <div id="nat-tab" class="tab-content">
+                <h2>NAT转发</h2>
+                <p>此功能正在开发中...</p>
+            </div>
+            <div id="tokens-tab" class="tab-content">
+                <h2>控制代理</h2>
+                <p>此功能正在开发中...</p>
+            </div>
+            <div id="logs-tab" class="tab-content">
+                <h2>日志</h2>
+                <p>此功能正在开发中...</p>
+            </div>
+            <div id="stats-tab" class="tab-content">
+                <h2>财务</h2>
+                <p>此功能正在开发中...</p>
+            </div>
+        </div>
+    </div>
+    </div>
+
+    <!-- 创建容器模态框 -->
+    <div id="create-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>创建容器</h2>
+                <button class="close-btn" onclick="closeCreateModal()">&times;</button>
+            </div>
+            <form id="create-form">
+                <div class="form-group">
+                    <label>容器名称</label>
+                    <input type="text" id="create-name" pattern="[a-zA-Z0-9-]+" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>CPU核数</label>
+                        <input type="number" id="create-cpu" value="1" min="0.5" step="0.5" required>
+                    </div>
+                    <div class="form-group">
+                        <label>内存 (MB)</label>
+                        <input type="number" id="create-memory" value="512" min="256" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>硬盘 (GB)</label>
+                        <input type="number" id="create-disk" value="2" min="1" required>
+                    </div>
+                    <div class="form-group">
+                        <label>带宽 (MB/s)</label>
+                        <input type="number" id="create-bandwidth" value="10" min="1" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>操作系统</label>
+                        <select id="create-os">
+                            <option value="debian:12">Debian 12</option>
+                            <option value="debian:11">Debian 11</option>
+                            <option value="ubuntu:22.04">Ubuntu 22.04</option>
+                            <option value="ubuntu:20.04">Ubuntu 20.04</option>
+                            <option value="centos:7">CentOS 7</option>
+                            <option value="centos:9-Stream">CentOS 9</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>SSH端口</label>
+                        <input type="number" id="create-ssh-port" value="20001" min="1024" max="65535" required>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeCreateModal()">取消</button>
+                    <button type="submit" class="btn btn-primary">创建</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 容器详情模态框 -->
+    <div id="detail-modal" class="modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2 id="detail-title">容器详情</h2>
+                <div>
+                    <button class="btn btn-primary" id="vnc-btn">VNC</button>
+                    <button class="close-btn" onclick="closeDetailModal()">&times;</button>
+                </div>
+            </div>
+            <div class="modal-body">
+                <div class="detail-info">
+                    <div class="info-row">
+                        <span class="label">状态:</span>
+                        <span id="detail-status" class="badge">Running</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">IP地址:</span>
+                        <span id="detail-ip">--</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">SSH端口:</span>
+                        <span id="detail-ssh-port">--</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">密码:</span>
+                        <span id="detail-password">--</span>
+                    </div>
+                </div>
+
+                <div class="charts-container">
+                    <div class="chart-box">
+                        <h3>CPU使用率</h3>
+                        <canvas id="cpu-chart"></canvas>
+                    </div>
+                    <div class="chart-box">
+                        <h3>内存使用</h3>
+                        <canvas id="memory-chart"></canvas>
+                    </div>
+                    <div class="chart-box">
+                        <h3>网络流量</h3>
+                        <canvas id="network-chart"></canvas>
+                    </div>
+                    <div class="chart-box">
+                        <h3>磁盘使用</h3>
+                        <canvas id="disk-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- VNC模态框 -->
+    <div id="vnc-modal" class="modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2>VNC 控制台</h2>
+                <button class="close-btn" onclick="closeVNCModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="vnc-screen">
+                    <p class="vnc-notice">VNC功能需要在容器中安装VNC服务器</p>
+                    <p class="vnc-notice">安装方法: apt-get install x11vnc 或 yum install tigervnc-server</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/containers.js"></script>
+    <script src="js/monitoring.js"></script>
+    <script src="js/vnc.js"></script>
+    <script src="js/app.js"></script>
+</body>
+
+</html>
